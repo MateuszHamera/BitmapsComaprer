@@ -1,14 +1,13 @@
 ﻿using Microsoft.Win32;
+using Microsoft.WindowsAPICodePack.Dialogs;
 using Prism.Commands;
 using Prism.Mvvm;
-using Prism.Services.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Input;
-using System.Windows.Media;
 
 namespace BitmapsComaprer
 {
@@ -16,9 +15,17 @@ namespace BitmapsComaprer
     {
         public MainWidowViewModel()
         {
+            LoadInitialFirstBitampCommand = new DelegateCommand(LoadInitialFirstBitamp);
+            LoadInitialSecondBitampCommand = new DelegateCommand(LoadInitialSecondBitamp);
             LoadFirstBitampCommand = new DelegateCommand(LoadFirstBitamp);
             LoadSecondBitampCommand = new DelegateCommand(LoadSecondBitamp);
             CompareBitampsCommand = new DelegateCommand(CompareBitamps);
+        }
+        private string _initialFirstBitmap;
+        public string InitialFirstBitmap
+        {
+            get => _initialFirstBitmap;
+            set => SetProperty(ref _initialFirstBitmap, value);
         }
 
         private string _firstBitmap;
@@ -28,6 +35,12 @@ namespace BitmapsComaprer
             set => SetProperty(ref _firstBitmap, value);
         }
 
+        private string _initialSecondBitmap;
+        public string InitialSecondBitmap
+        {
+            get => _initialSecondBitmap;
+            set => SetProperty(ref _initialSecondBitmap, value);
+        }
         private string _secondBitmap;
         public string SecondBitmap
         {
@@ -44,26 +57,54 @@ namespace BitmapsComaprer
 
         public ICommand LoadFirstBitampCommand { get; }
         public ICommand LoadSecondBitampCommand { get; }
+        public ICommand LoadInitialFirstBitampCommand { get; }
+        public ICommand LoadInitialSecondBitampCommand { get; }
         public ICommand CompareBitampsCommand { get; }
 
+        private void LoadInitialFirstBitamp()
+        {
+            try
+            {
+                InitialFirstBitmap = GetDirectory();
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError(ex.Message);
+            }
+        }
+        private void LoadInitialSecondBitamp()
+        {
+            try
+            {
+                InitialSecondBitmap = GetDirectory();
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError(ex.Message);
+            }
+        }
+        private string GetDirectory()
+        {
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+            dialog.InitialDirectory = "C:\\Users";
+            dialog.IsFolderPicker = true;
+            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+            {
+                return dialog.FileName;
+            }
+            return "C:\\Users";
+        }
         private void LoadFirstBitamp()
         {
             try
             {
-                OpenFileDialog dlg = new OpenFileDialog();
-
-                dlg.Filter = "Image files (*.jpg, *.jpeg, *.jpe, *.jfif, *.png) | *.jpg; *.jpeg; *.jpe; *.jfif; *.png";
-
-                var result = dlg.ShowDialog();
-
-                if (result == true)
+                var initial = "C:\\Users";
+                if (!string.IsNullOrEmpty(InitialFirstBitmap))
                 {
-
-                    string filename = dlg.FileName;
-                    string path = dlg.InitialDirectory;
-
-                    FirstBitmap = path + filename;
+                    initial = InitialFirstBitmap;
                 }
+
+                FirstBitmap = GetBitamp(initial);
             }
             catch (Exception ex)
             {
@@ -74,25 +115,34 @@ namespace BitmapsComaprer
         {
             try
             {
-                OpenFileDialog dlg = new OpenFileDialog();
-
-                dlg.Filter = "Image files (*.jpg, *.jpeg, *.jpe, *.jfif, *.png) | *.jpg; *.jpeg; *.jpe; *.jfif; *.png";
-
-                var result = dlg.ShowDialog();
-
-                if (result == true)
+                var initial = "C:\\Users";
+                if (!string.IsNullOrEmpty(InitialSecondBitmap))
                 {
-
-                    string filename = dlg.FileName;
-                    string path = dlg.InitialDirectory;
-
-                    SecondBitmap = path + filename;
+                    initial = InitialSecondBitmap;
                 }
+
+                SecondBitmap = GetBitamp(initial);               
             }
             catch (Exception ex)
             {
                 Trace.TraceError(ex.Message);
             }
+        }
+        private string GetBitamp(string initialDirectory)
+        {
+            OpenFileDialog dlg = new OpenFileDialog();
+
+            dlg.Filter = "Image files (*.jpg, *.jpeg, *.jpe, *.jfif, *.png, *.bmp) | *.jpg; *.jpeg; *.jpe; *.jfif; *.png; *.bmp";
+            dlg.InitialDirectory = initialDirectory;
+
+            var result = dlg.ShowDialog();
+
+            if (result == true)
+            {
+                string filename = dlg.FileName;
+                return  filename;
+            }
+            return string.Empty;
         }
         private void CompareBitamps()
         {
@@ -138,7 +188,5 @@ namespace BitmapsComaprer
                 Trace.TraceError(ex.Message);
             }
         }
-
-
     }
 }

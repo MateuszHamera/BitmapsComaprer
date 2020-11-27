@@ -48,6 +48,20 @@ namespace BitmapsComaprer
             set => SetProperty(ref _secondBitmap, value);
         }
 
+        private double _averageValueFirstBitmap;
+        public double AverageValueFirstBitmap
+        {
+            get => _averageValueFirstBitmap;
+            set => SetProperty(ref _averageValueFirstBitmap, value);
+        }
+
+        private double _averageValueSecondBitmap;
+        public double AverageValueSecondBitmap
+        {
+            get => _averageValueSecondBitmap;
+            set => SetProperty(ref _averageValueSecondBitmap, value);
+        }
+
         private string _difference;
         public string Difference
         {
@@ -104,7 +118,15 @@ namespace BitmapsComaprer
                     initial = InitialFirstBitmap;
                 }
 
-                FirstBitmap = GetBitamp(initial);
+                var bitmapString = GetBitamp(initial);
+
+                if (string.IsNullOrEmpty(bitmapString))
+                {
+                    return;
+                }
+
+                FirstBitmap = bitmapString;
+                AverageValueFirstBitmap = AverageBitmap(FirstBitmap);
             }
             catch (Exception ex)
             {
@@ -121,7 +143,15 @@ namespace BitmapsComaprer
                     initial = InitialSecondBitmap;
                 }
 
-                SecondBitmap = GetBitamp(initial);               
+                var bitmapString = GetBitamp(initial);
+
+                if (string.IsNullOrEmpty(bitmapString))
+                {
+                    return;
+                }
+
+                SecondBitmap = bitmapString;
+                AverageValueSecondBitmap = AverageBitmap(SecondBitmap);
             }
             catch (Exception ex)
             {
@@ -142,6 +172,7 @@ namespace BitmapsComaprer
                 string filename = dlg.FileName;
                 return  filename;
             }
+
             return string.Empty;
         }
         private void CompareBitamps()
@@ -187,6 +218,24 @@ namespace BitmapsComaprer
             {
                 Trace.TraceError(ex.Message);
             }
+        }
+
+        private double AverageBitmap(string path)
+        {
+            Bitmap bitmap = new Bitmap(path);
+
+            var array = bitmap.ToArray();
+
+            long sumPixelValue = 0;
+
+            foreach (byte pixel in array)
+            {
+                sumPixelValue += pixel;
+            }
+
+            double averageValue = (double)sumPixelValue / (double)array.Length;
+
+            return averageValue;
         }
     }
 }

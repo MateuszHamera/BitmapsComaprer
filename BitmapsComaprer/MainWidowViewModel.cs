@@ -4,8 +4,10 @@ using Prism.Commands;
 using Prism.Mvvm;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Windows.Input;
 
@@ -21,6 +23,13 @@ namespace BitmapsComaprer
             LoadSecondBitampCommand = new DelegateCommand(LoadSecondBitamp);
             CompareBitampsCommand = new DelegateCommand(CompareBitamps);
         }
+
+        public ObservableCollection<Bitmap> FirstBitmaps 
+            = new ObservableCollection<Bitmap>();
+
+        public ObservableCollection<Bitmap> SecondBitmaps
+             = new ObservableCollection<Bitmap>();
+
         private string _initialFirstBitmap;
         public string InitialFirstBitmap
         {
@@ -80,6 +89,10 @@ namespace BitmapsComaprer
             try
             {
                 InitialFirstBitmap = GetDirectory();
+
+                AverageValueFirstBitmap = AverageBitmaps(InitialFirstBitmap);
+
+                AverageValueFirstBitmap /= 2.55;
             }
             catch (Exception ex)
             {
@@ -91,6 +104,10 @@ namespace BitmapsComaprer
             try
             {
                 InitialSecondBitmap = GetDirectory();
+
+                AverageValueSecondBitmap = AverageBitmaps(InitialSecondBitmap);
+
+                AverageValueSecondBitmap /= 2.55;
             }
             catch (Exception ex)
             {
@@ -162,7 +179,7 @@ namespace BitmapsComaprer
         {
             OpenFileDialog dlg = new OpenFileDialog();
 
-            dlg.Filter = "Image files (*.jpg, *.jpeg, *.jpe, *.jfif, *.png, *.bmp) | *.jpg; *.jpeg; *.jpe; *.jfif; *.png; *.bmp";
+            dlg.Filter = "Image files (*.jpg, *.jpeg, *.jpe, *.jfif, *.png, *.bmp, *.tif) | *.jpg; *.jpeg; *.jpe; *.jfif; *.png; *.bmp; *.tif";
             dlg.InitialDirectory = initialDirectory;
 
             var result = dlg.ShowDialog();
@@ -179,6 +196,11 @@ namespace BitmapsComaprer
         {
             try
             {
+                if(AverageValueFirstBitmap != 0 && AverageValueSecondBitmap != 0)
+                {
+                    Difference = Math.Abs(AverageValueFirstBitmap - AverageValueSecondBitmap).ToString();
+                }
+                
                 if (FirstBitmap == null)
                 {
                     return;
@@ -227,15 +249,40 @@ namespace BitmapsComaprer
             var array = bitmap.ToArray();
 
             long sumPixelValue = 0;
+            int value255 = 0;
 
             foreach (byte pixel in array)
             {
                 sumPixelValue += pixel;
+                if (pixel == 255)
+                    value255++;
             }
-
+            
             double averageValue = (double)sumPixelValue / (double)array.Length;
 
             return averageValue;
+        }
+
+        private double AverageBitmaps(string directory)
+        {
+            var files = Directory.GetFiles(directory);
+
+            List<double> averageValueInBitmaps = new List<double>();
+
+            foreach (var file in files)
+            {
+                var averageValue = AverageBitmap(file);
+                averageValueInBitmaps.Add(averageValue);
+            }
+
+            double sumAverageValues = 0;
+
+            foreach (var value in averageValueInBitmaps)
+            {
+                sumAverageValues += value;
+            }
+
+            return sumAverageValues / averageValueInBitmaps.Count;
         }
     }
 }
